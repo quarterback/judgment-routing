@@ -1,76 +1,61 @@
-Judgment Router
-===============
+# Judgment Routing and Decision Engineering
 
-Infrastructure that routes AI decisions by authority.
+This repository is an early scaffold for thinking about how authority, judgment, and accountability are engineered into systems that delegate decisions to AI agents.
 
-Quickstart
-----------
+It exists to name a missing layer in current AI and automation architectures and to make that layer discussable, inspectable, and evolvable.
 
-bash
+## The Problem
 
-`git clone https://github.com/quarterback/judgment-router cd judgment-router pip install -r requirements.txt streamlit run demo/app.py `
+Organizations increasingly use AI systems to evaluate eligibility, recommend actions, and automate decisions that materially affect people's lives.
 
-Core Primitives
----------------
+In government, enterprise, and regulated domains, these decisions were historically made by humans operating inside visible approval chains: supervisors, legal review, signing authority, escalation paths. Those processes were slow and imperfect, but they were traceable. You could reconstruct who decided what, under which mandate, and why.
 
-Four Signals (1-5 scale)
-------------------------
+As automation scales, judgment becomes invisible.
 
-UNCERTAINTY: Data gaps or conflicting inputs\
-STAKES: Budget impact or downstream risk\
-AUTHORITY: Exceeds delegation scope\
-NOVELTY: Familiar pattern or first-of-kind
+Current AI architectures focus on task execution, orchestration, and access control. They leave unaddressed:
 
-Decision Receipt
-----------------
+* how authority is delegated
+* where discretion begins and ends
+* when escalation is required
+* how decisions are authorized
+* how accountability is preserved over time
 
-Every action produces a Decision Receipt linking authority to outcome:
+This gap creates administrative debt, governance risk, and institutional fragility.
 
-json
+## Two Core Concepts
 
-`{
- "receipt_id": "rcpt_abc123", "authority_source": "sarah_chen_q1_delegation", "signals": { "uncertainty": 1, "stakes": 2, "authority": 1, "novelty": 1 }, "routing": "FAST_PATH", "action": "approved_vendor_payment_450" } `
+### Decision Engineering
 
-Structure
----------
+Decision Engineering is the practice of explicitly designing how decisions are made, authorized, escalated, and audited inside institutions.
 
-text
+Organizations have always engineered decisions through forms, policies, approval chains, and signing authority. What has changed is that those mechanisms can no longer be implicit or human mediated by default.
 
-`. ├── src/judgment_router.py     # Core routing logic ├── schemas/decision_receipt.json  # JSON schema ├── examples/ │   ├── vendor_approval.py     # $450 invoice │   └── permit_edgecase.py     # Immigration status └── demo/app.py                # Streamlit dashboard `
+Decision Engineering treats judgment as infrastructure.
 
-Examples
---------
+### Judgment Router
 
-**Vendor Approval ($450 invoice)**\
-Signals: uncertainty=1, stakes=2, authority=1, novelty=1\
-Routing: FAST_PATH → auto-approved
+A Judgment Router is infrastructure that sits between an agent's proposal and the execution of an action.
 
-**Permit Edge Case (immigration status)**\
-Signals: uncertainty=4, stakes=3, authority=2, novelty=5\
-Routing: HUMAN → queued for review
+The agent analyzes inputs and proposes an action. The judgment layer evaluates that proposal against explicit authority boundaries, policy constraints, and escalation rules. The outcome is one of three states: approved, escalated, or blocked. Every decision produces a traceable record explaining what happened and why.
 
-Judgment Router
----------------
+Judgment routers make delegated judgment legible, constrained, and auditable.
 
-Middleware that evaluates agent proposals against authority boundaries. Agent proposes action. Router scores signals. Outcome determines execution path.
+## Scope
 
-FAST PATH: All signals ≤2\
-SLOW PATH: Signals 3-4\
-HUMAN: Any signal=5 or total≥14\
-SPECIALIST: Domain mismatch
+This repository provides conceptual scaffolding. Schemas, examples, and pseudocode are illustrative. They are designed to make authority, escalation, and responsibility visible so they can be debated, refined, and improved.
 
-Contributing
-------------
+Expect iteration.
 
-1.  Fork repository
+## Structure
 
-2.  Run `make test`
+* `/concepts/` Conceptual notes defining decision engineering, judgment routing, and related primitives.
 
-3.  Submit pull request
+Future additions may include example schemas, reference flows, and design patterns as needed to clarify underlying ideas.
 
-4.  Preserve Decision Receipt schema
+## Why This Exists
 
-License
--------
+As AI systems become part of the architecture of everyday life, we need shared language for interrogating how decisions are authorized and who is responsible when they are wrong.
 
-MIT License
+Invisible judgment is unacceptable in systems that affect real people.
+
+This repository exists to name that problem and create a foundation for solving it.
