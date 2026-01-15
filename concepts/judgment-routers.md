@@ -243,6 +243,5 @@ Organizations implementing judgment routers gain:
 * Human oversight focused on exceptions, not routine actions
 * Trustable autonomy at scale
 
-Start with one workflow — refund approvals, procurement, content moderation — and expand.
-The mechanism stays consistent; only the schemas evolve.
+Start with one workflow — refund approvals, procurement, content moderation — and expand. The mechanism stays consistent; only the schemas evolve.
 
