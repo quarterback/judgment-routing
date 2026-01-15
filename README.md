@@ -1,76 +1,96 @@
-# Judgment Routing and Decision Engineering
+# Judgment Routing
 
-This repository is an early scaffold for thinking about how authority, judgment, and accountability are engineered into systems that delegate decisions to AI agents.
-
-It exists to name a missing layer in current AI and automation architectures and to make that layer discussable, inspectable, and evolvable.
+This repository exists because we're building AI systems that make consequential decisions about people's lives, and we have no shared infrastructure for making those decisions legible, bounded, or accountable.
 
 ## The Problem
 
-Organizations increasingly use AI systems to evaluate eligibility, recommend actions, and automate decisions that materially affect people's lives.
+Organizations are deploying AI agents to handle everything from benefits enrollment to procurement approvals. These systems work great until they encounter an edge case, an ambiguous policy interpretation, or a decision that exceeds their granted authority. When that happens, most systems either fail silently, hallucinate compliance, or execute anyway and hope nobody notices.
 
-In government, enterprise, and regulated domains, these decisions were historically made by humans operating inside visible approval chains: supervisors, legal review, signing authority, escalation paths. Those processes were slow and imperfect, but they were traceable. You could reconstruct who decided what, under which mandate, and why.
+This creates two problems:
 
-As automation scales, judgment becomes invisible.
+First, the 90/10 problem. Ninety percent of decisions are routine and agents can handle them fine. The other ten percent carry outsized institutional risk. Without explicit routing logic, you can't separate the two.
 
-Current AI architectures focus on task execution, orchestration, and access control. They leave unaddressed:
+Second, the authority problem. When a paper form moved through Jan to Bill to Steve, you knew who held signing authority at each step. When an AI processes a request, that chain disappears. You're left trying to reconstruct decisions months later with no trail.
 
-* how authority is delegated
-* where discretion begins and ends
-* when escalation is required
-* how decisions are authorized
-* how accountability is preserved over time
+## What This Is
 
-This gap creates administrative debt, governance risk, and institutional fragility.
+Judgment Routing is a middleware pattern that sits between an agent's proposal and the execution of that action. The agent does analysis and recommends an action. The judgment layer evaluates that recommendation against explicit policy constraints and authority boundaries. Based on that evaluation, the action either executes immediately, gets routed for verification, or escalates to a human with signing authority.
 
-## Two Core Concepts
+Every decision produces a receipt that explains what happened and why.
 
-### Decision Engineering
+## Core Concepts
 
-Decision Engineering is the practice of explicitly designing how decisions are made, authorized, escalated, and audited inside institutions.
+**Decision Engineering** is the practice of making authority chains, policy constraints, and escalation rules explicit rather than implicit. When Jan reviewed forms and passed edge cases to Steve, that was decision engineering. It was visible and traceable. We need the same clarity when AI systems process requests, only now it has to be documented.
 
-Organizations have always engineered decisions through forms, policies, approval chains, and signing authority. What has changed is that those mechanisms can no longer be implicit or human mediated by default.
+**The Judgment Router** is infrastructure that evaluates proposed actions against institutional mandate. It determines whether an action falls within approved parameters, requires additional verification, or needs human review.
 
-Decision Engineering treats judgment as infrastructure.
+**Decision Receipts** are structured records that link every action back to the authority that permitted it. They preserve institutional memory and create audit trails.
 
-### Judgment Router
+## How It Works
 
-A Judgment Router is infrastructure that sits between an agent's proposal and the execution of an action.
+The router evaluates proposed actions across four signals:
 
-The agent analyzes inputs and proposes an action. The judgment layer evaluates that proposal against explicit authority boundaries, policy constraints, and escalation rules. The outcome is one of three states: approved, escalated, or blocked. Every decision produces a traceable record explaining what happened and why.
+**UNCERTAINTY** measures data ambiguity or conflicting requirements  
+**STAKES** measures fiscal impact, downstream risk, or stakeholder count  
+**AUTHORITY** compares required sign off level against current delegation  
+**NOVELTY** distinguishes familiar patterns from first of their kind scenarios
 
-Judgment routers make delegated judgment legible, constrained, and auditable.
+Based on these signals, actions route through one of four paths:
 
-## Scope
+**FAST PATH** for low risk decisions that execute immediately  
+**SLOW PATH** for ambiguous cases requiring verification  
+**HUMAN ESCALATION** for high stakes decisions or authority gaps  
+**SPECIALIST REFERRAL** for domain mismatches requiring expert review
 
-This repository provides conceptual scaffolding. Schemas, examples, and pseudocode are illustrative. They are designed to make authority, escalation, and responsibility visible so they can be debated, refined, and improved.
+## Sample Decision Receipt
 
-Expect iteration.
+```json
+{
+  "receipt_id": "jr-2026-001",
+  "timestamp": "2026-01-15T09:42:01Z",
+  "status": "AUTHORIZED",
+  "routing_outcome": "FAST_PATH",
+  "signals": {
+    "uncertainty": 1,
+    "stakes": 2,
+    "authority": 1,
+    "novelty": 1
+  },
+  "metadata": {
+    "agent_id": "benefits-processor-04",
+    "policy_imprint": "HR1-COMPLIANCE-V2",
+    "authority_key": "Director_Signature_Key_0x82",
+    "rationale": "Applicant meets all eligibility criteria. Income verified via IRS API."
+  }
+}
+```
+## How You Can Help
 
-## Structure
+I'm putting this into the world to get more people engaging with these ideas. Here's how you can contribute:
 
-* `/concepts/` Conceptual notes defining decision engineering, judgment routing, and related primitives.
+**Share related work.** If you know of projects exploring similar territory, research on delegation and authority in AI systems, or existing implementations that solve pieces of this problem, open an issue or share links.
 
-Future additions may include example schemas, reference flows, and design patterns as needed to clarify underlying ideas.
+**Contribute implementation patterns.** If you've built systems that handle escalation, authority boundaries, or decision auditing in production environments, your patterns would be valuable here. Real world experience matters more than theoretical completeness.
 
-## Why This Exists
+**Refine the schemas.** The Decision Receipt format and scoring signals are starting points. If you work in regulated domains or have experience with compliance systems, feedback on what's missing or what needs adjustment would help.
 
-As AI systems become part of the architecture of everyday life, we need shared language for interrogating how decisions are authorized and who is responsible when they are wrong.
+**Build examples.** Concrete use cases make abstract concepts real. If you want to sketch out how judgment routing would work for benefits eligibility, procurement approval, content moderation, or other domains, that would strengthen the repository.
 
-### **Prototypes & Visual Frameworks**
-I've been writing and workshopping on this topic for the past year. Here's some of the iteration:
+**Challenge the framing.** If you think this misses something important, misconstrues existing work, or solves the wrong problem, that's valuable feedback too. Open an issue or reach out at bronsonr@umich.edu
 
-* **[AI Risk Readiness Dashboard](https://pop-karate-81037755.figma.site/)** – A visual prototype for evaluating institutional readiness and risk signals before deployment.
-* **[Mandate Mapping & Logic Flows](https://gut-spec-29713822.figma.site)** – Speculative UI for how policy intent is mapped into agentic boundaries.
-* **[The Authority Queue Interface](https://chat-fang-60036973.figma.site)** – A draft of the Triage Dashboard showing how "Judgment Gaps" are surfaced to human operators.
-* **[Decision Receipt Schema Visualizer](https://mono-right-67494032.figma.site)** – A conceptual look at the forensic audit trail produced by the Judgment Router.
+## Status
 
-### **Open Source Repositories**
+This is an early scaffold. The schemas and examples are illustrative, designed to make authority and accountability visible so they can be refined. I've been thinking about these problems for the past year through various prototypes and frameworks. This repository consolidates that work into something other people can build with.
 
-* **[Tardigrade (Resilience Pattern)](https://github.com/Digital-Corps-PDX/tardigrade)** – A repo exploring "graceful degradation" for systems, ensuring they revert to human-legible states during AI failure.
-* **[AI-Enablement (Archived)](https://github.com/Digital-Corps-PDX/AI-enablement)** – Early work on government-specific AI implementation standards and constraints.
+## Related Work
 
-### **The "Why" (Strategic Deep-Dives)**
+I've been testing concepts that led here:
 
-* **[Context Engineering for LLMs](https://blog.ronbronson.com/context-engineering-for-llms-starts-with-systems-not-prompts)** – Why we need to engineer systems and institutional data, not just write better prompts.
-* **[Context is the Terrain](https://blog.ronbronson.com/context-is-not-just-a-map-its-the-terrain)** – A look at why AI fails when it doesn't understand the administrative landscape it's operating in.
-* **[Service Design for AI](https://blog.ronbronson.com/service-design-for-ai-why-human-experience-hx-matters)** – Establishing the need for "Human Experience" (HX) as the primary metric for automated government services.
+* [Authority Queue & Triage Dashboard](https://chat-fang-60036973.figma.site)
+* [AI Risk Readiness Dashboard](https://pop-karate-81037755.figma.site/)
+* [Decision Receipt Schema Visualizer](https://mono-right-67494032.figma.site)
+
+Other projects exploring adjacent territory:
+
+* [Tardigrade](https://github.com/Digital-Corps-PDX/tardigrade): Resilience patterns for graceful degradation in agentic systems
+* [AI Enablement](https://github.com/Digital-Corps-PDX/AI-enablement): Early frameworks for government AI implementation standards (deprecated)
