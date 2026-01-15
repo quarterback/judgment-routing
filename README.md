@@ -14,7 +14,7 @@ Second, the authority problem. When a paper form moved through Jan to Bill to St
 
 ## What This Is
 
-Judgment Routing is a middleware pattern that sits between an agent's proposal and the execution of that action. The agent does analysis and recommends an action. The judgment layer evaluates that recommendation against explicit policy constraints and authority boundaries. Based on that evaluation, the action either executes immediately, gets routed for verification, or escalates to a human with signing authority.
+Judgment Routing is a stateful middleware pattern that sits between an agent's proposal and the execution of that action. The agent does analysis and recommends an action. The judgment layer evaluates that recommendation against explicit policy constraints and authority boundaries. Based on that evaluation, the action either executes immediately, gets routed for verification, or escalates to a human with signing authority.
 
 Every decision produces a receipt that explains what happened and why.
 
@@ -22,7 +22,7 @@ Every decision produces a receipt that explains what happened and why.
 
 **Decision Engineering** is the practice of making authority chains, policy constraints, and escalation rules explicit rather than implicit. When Jan reviewed forms and passed edge cases to Steve, that was decision engineering. It was visible and traceable. We need the same clarity when AI systems process requests, only now it has to be documented.
 
-**The Judgment Router** is infrastructure that evaluates proposed actions against institutional mandate. It determines whether an action falls within approved parameters, requires additional verification, or needs human review.
+**Judgment Router** is infrastructure that evaluates proposed actions against your institutional rules. It determines whether an action falls within approved parameters, requires additional verification, or needs human review.
 
 **Decision Receipts** are structured records that link every action back to the authority that permitted it. They preserve institutional memory and create audit trails.
 
