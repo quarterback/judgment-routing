@@ -56,8 +56,6 @@ Future additions may include example schemas, reference flows, and design patter
 
 As AI systems become part of the architecture of everyday life, we need shared language for interrogating how decisions are authorized and who is responsible when they are wrong.
 
-Here is the curated list of links and the specific "Proof of Work" labels for each, so you can drop them into your README or the "The Paper Trail" section of your post:
-
 ### **Prototypes & Visual Frameworks**
 I've been writing and workshopping on this topic for the past year. Here's some of the iteration:
 
