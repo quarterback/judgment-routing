@@ -1,45 +1,76 @@
-# Judgment Routing 
+Judgment Router
+===============
 
-### Overview
-Judgment Routing is a stateful middleware pattern for agentic architectures, designed to bridge the gap between **agentic intelligence** (reasoning) and **institutional authority** (execution).
+Infrastructure that routes AI decisions by authority.
 
-As AI agents scale, organizations face what you might think of as a 90/10 problem: most autonomous actions are routine, while a small fraction represent edge cases with outsized institutional risk. Judgment routing enables management by exception, ensuring that high-stakes or ambiguous decisions are routed appropriately rather than silently executed.
+Quickstart
+----------
 
-### Core Primitives
+bash
 
-#### 1. Decision Engineering
-The discipline of codifying policy intent, risk tolerances, and delegation scopes into machine-readable mandates.
+`git clone https://github.com/quarterback/judgment-router cd judgment-router pip install -r requirements.txt streamlit run demo/app.py `
 
-#### 2. The Judgment Router
-A stateful gateway that intercepts agent-proposed actions, scores them against institutional policy, and determines the path of execution.
+Core Primitives
+---------------
 
-#### 3. The Decision Receipt
-A JSON-based provenance record that captures the logic, scoring signals, and authority chain for every executed action.
+Four Signals (1-5 scale)
+------------------------
 
-### The Scoring Matrix (1-5)
-These scores are not intended to “decide” outcomes, but to route decisions to the appropriate execution, escalation, or review path.
+UNCERTAINTY: Data gaps or conflicting inputs\
+STAKES: Budget impact or downstream risk\
+AUTHORITY: Exceeds delegation scope\
+NOVELTY: Familiar pattern or first-of-kind
 
-The Router evaluates proposed actions across four primary signals:
-- **UNCERTAINTY:** Data ambiguity or conflicting requirement logic.
-- **STAKES:** Fiscal impact, downstream risk, or stakeholder count.
-- **AUTHORITY:** Required sign-off level vs. current agent delegation.
-- **NOVELTY:** Pattern recognition vs. first-of-kind scenarios.
+Decision Receipt
+----------------
 
-### Sample Decision Receipt
-```json
-{
-  "receipt_id": "jr-2026-001",
-  "status": "AUTHORIZED",
-  "routing_outcome": "FAST_PATH",
-  "signals": {
-    "uncertainty": 1,
-    "stakes": 2,
-    "authority": 2,
-    "novelty": 1
-  },
-  "metadata": {
-    "agent_id": "procurement-agent-04",
-    "policy_ref": "MOU-FINANCE-2026-v1",
-    "human_owner": "Director_Signature_Key_0x82"
-  }
-}
+Every action produces a Decision Receipt linking authority to outcome:
+
+json
+
+`{
+ "receipt_id": "rcpt_abc123", "authority_source": "sarah_chen_q1_delegation", "signals": { "uncertainty": 1, "stakes": 2, "authority": 1, "novelty": 1 }, "routing": "FAST_PATH", "action": "approved_vendor_payment_450" } `
+
+Structure
+---------
+
+text
+
+`. ├── src/judgment_router.py     # Core routing logic ├── schemas/decision_receipt.json  # JSON schema ├── examples/ │   ├── vendor_approval.py     # $450 invoice │   └── permit_edgecase.py     # Immigration status └── demo/app.py                # Streamlit dashboard `
+
+Examples
+--------
+
+**Vendor Approval ($450 invoice)**\
+Signals: uncertainty=1, stakes=2, authority=1, novelty=1\
+Routing: FAST_PATH → auto-approved
+
+**Permit Edge Case (immigration status)**\
+Signals: uncertainty=4, stakes=3, authority=2, novelty=5\
+Routing: HUMAN → queued for review
+
+Judgment Router
+---------------
+
+Middleware that evaluates agent proposals against authority boundaries. Agent proposes action. Router scores signals. Outcome determines execution path.
+
+FAST PATH: All signals ≤2\
+SLOW PATH: Signals 3-4\
+HUMAN: Any signal=5 or total≥14\
+SPECIALIST: Domain mismatch
+
+Contributing
+------------
+
+1.  Fork repository
+
+2.  Run `make test`
+
+3.  Submit pull request
+
+4.  Preserve Decision Receipt schema
+
+License
+-------
+
+MIT License
