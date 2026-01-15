@@ -56,6 +56,23 @@ Future additions may include example schemas, reference flows, and design patter
 
 As AI systems become part of the architecture of everyday life, we need shared language for interrogating how decisions are authorized and who is responsible when they are wrong.
 
-Invisible judgment is unacceptable in systems that affect real people.
+Here is the curated list of links and the specific "Proof of Work" labels for each, so you can drop them into your README or the "The Paper Trail" section of your post:
 
-This repository exists to name that problem and create a foundation for solving it.
+### **Prototypes & Visual Frameworks**
+I've been writing and workshopping on this topic for the past year. Here's some of the iteration:
+
+* **[AI Risk Readiness Dashboard](https://pop-karate-81037755.figma.site/)** – A visual prototype for evaluating institutional readiness and risk signals before deployment.
+* **[Mandate Mapping & Logic Flows](https://gut-spec-29713822.figma.site)** – Speculative UI for how policy intent is mapped into agentic boundaries.
+* **[The Authority Queue Interface](https://chat-fang-60036973.figma.site)** – A draft of the Triage Dashboard showing how "Judgment Gaps" are surfaced to human operators.
+* **[Decision Receipt Schema Visualizer](https://mono-right-67494032.figma.site)** – A conceptual look at the forensic audit trail produced by the Judgment Router.
+
+### **Open Source Repositories**
+
+* **[Tardigrade (Resilience Pattern)](https://github.com/Digital-Corps-PDX/tardigrade)** – A repo exploring "graceful degradation" for systems, ensuring they revert to human-legible states during AI failure.
+* **[AI-Enablement (Archived)](https://github.com/Digital-Corps-PDX/AI-enablement)** – Early work on government-specific AI implementation standards and constraints.
+
+### **The "Why" (Strategic Deep-Dives)**
+
+* **[Context Engineering for LLMs](https://blog.ronbronson.com/context-engineering-for-llms-starts-with-systems-not-prompts)** – Why we need to engineer systems and institutional data, not just write better prompts.
+* **[Context is the Terrain](https://blog.ronbronson.com/context-is-not-just-a-map-its-the-terrain)** – A look at why AI fails when it doesn't understand the administrative landscape it's operating in.
+* **[Service Design for AI](https://blog.ronbronson.com/service-design-for-ai-why-human-experience-hx-matters)** – Establishing the need for "Human Experience" (HX) as the primary metric for automated government services.
