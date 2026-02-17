@@ -1,382 +1,341 @@
-import { A2UISurface, A2UIComponent } from '../types/a2ui';
+import { A2UIMessage, A2UIMessageBuilder, ComponentDefinition } from '../types/a2ui-protocol';
 import { StrategicContext, AuthorityEnvelope, DecisionReceipt } from '../types/judgment';
 
 export class JudgmentAgent {
-  generateStrategicContextSurface(context?: StrategicContext): A2UISurface {
-    const components: Record<string, A2UIComponent> = {
-      'root': {
-        component_type: 'container',
-        component_id: 'root',
-        children: ['header', 'content']
-      },
-      'header': {
-        component_type: 'card',
-        component_id: 'header',
-        data: { title: 'Strategic Context' },
-        children: context ? ['header-info'] : ['empty-state']
-      }
-    };
+  generateStrategicContextMessages(context: StrategicContext): A2UIMessage[] {
+    const components: ComponentDefinition[] = [];
+    const surfaceId = 'strategic-context-surface';
 
-    if (context) {
-      components['header-info'] = {
-        component_type: 'container',
-        component_id: 'header-info',
-        children: ['context-id', 'grantor', 'period', 'priorities-card', 'boundaries-card', 'escalation-card']
-      };
+    components.push(
+      A2UIMessageBuilder.column('root', ['title', 'description', 'priorities-section', 'boundaries-section'], '20px')
+    );
 
-      components['context-id'] = {
-        component_type: 'text',
-        component_id: 'context-id',
-        data: { variant: 'h2', text: context.context_id }
-      };
+    components.push(
+      A2UIMessageBuilder.text('title', context.name)
+    );
 
-      components['grantor'] = {
-        component_type: 'key_value',
-        component_id: 'grantor',
-        data: {
-          items: [
-            { key: 'Authority Grantor', value: context.grantor_name },
-            { key: 'Role', value: context.grantor_role },
-            { key: 'Active Period', value: `${new Date(context.active_start).toLocaleDateString()} - ${new Date(context.active_end).toLocaleDateString()}` }
-          ]
-        }
-      };
+    components.push(
+      A2UIMessageBuilder.text('description', context.description)
+    );
 
-      components['priorities-card'] = {
-        component_type: 'card',
-        component_id: 'priorities-card',
-        data: { title: 'Strategic Priorities' },
-        children: Object.keys(context.priorities).map((_, idx) => `priority-${idx}`)
-      };
+    components.push(
+      A2UIMessageBuilder.column('priorities-section', ['priorities-title', 'priorities-list'], '12px')
+    );
 
-      Object.entries(context.priorities).forEach(([key, priority], idx) => {
-        components[`priority-${idx}`] = {
-          component_type: 'container',
-          component_id: `priority-${idx}`,
-          children: [`priority-bar-${idx}`, `priority-text-${idx}`]
-        };
+    components.push(
+      A2UIMessageBuilder.text('priorities-title', 'Strategic Priorities')
+    );
 
-        components[`priority-bar-${idx}`] = {
-          component_type: 'progress_bar',
-          component_id: `priority-bar-${idx}`,
-          data: {
-            label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            value: priority.weight * 100,
-            max: 100
-          }
-        };
+    const priorityIds: string[] = [];
+    context.priorities.forEach((priority, idx) => {
+      const itemId = `priority-item-${idx}`;
+      const nameId = `priority-name-${idx}`;
+      const weightId = `priority-weight-${idx}`;
+      const descId = `priority-desc-${idx}`;
 
-        components[`priority-text-${idx}`] = {
-          component_type: 'text',
-          component_id: `priority-text-${idx}`,
-          data: { variant: 'caption', text: priority.rationale }
-        };
-      });
+      priorityIds.push(itemId);
 
-      components['boundaries-card'] = {
-        component_type: 'card',
-        component_id: 'boundaries-card',
-        data: { title: 'Authority Boundaries' },
-        children: ['boundaries-list']
-      };
+      components.push(
+        A2UIMessageBuilder.column(itemId, [nameId, weightId, descId], '4px')
+      );
 
-      const boundaryItems: string[] = [];
+      components.push(
+        A2UIMessageBuilder.text(nameId, `${priority.name} (Weight: ${(priority.weight * 100).toFixed(0)}%)`)
+      );
 
-      if (context.authority_boundaries.financial) {
-        context.authority_boundaries.financial.forEach(b => {
-          boundaryItems.push(`${b.action}: ${b.currency || ''}${b.limit} (escalate at ${b.escalation_threshold || 'N/A'})`);
-        });
-      }
+      components.push(
+        A2UIMessageBuilder.text(weightId, '█'.repeat(Math.round(priority.weight * 20)))
+      );
 
-      if (context.authority_boundaries.communication) {
-        context.authority_boundaries.communication.forEach(b => {
-          boundaryItems.push(`${b.action}: ${b.limit} ${b.unit}`);
-        });
-      }
+      components.push(
+        A2UIMessageBuilder.text(descId, priority.description)
+      );
+    });
 
-      components['boundaries-list'] = {
-        component_type: 'list',
-        component_id: 'boundaries-list',
-        data: { items: boundaryItems }
-      };
+    components.push(
+      A2UIMessageBuilder.list('priorities-list', priorityIds, '12px')
+    );
 
-      components['escalation-card'] = {
-        component_type: 'card',
-        component_id: 'escalation-card',
-        data: { title: 'Escalation Contacts' },
-        children: ['escalation-table']
-      };
+    components.push(
+      A2UIMessageBuilder.column('boundaries-section', ['boundaries-title', 'boundaries-list'], '12px')
+    );
 
-      components['escalation-table'] = {
-        component_type: 'table',
-        component_id: 'escalation-table',
-        data: {
-          headers: ['Authority Level', 'Name', 'Threshold'],
-          rows: context.escalation_contacts.map(c => [c.authority_level, c.name, c.threshold])
-        }
-      };
-    } else {
-      components['empty-state'] = {
-        component_type: 'text',
-        component_id: 'empty-state',
-        data: { variant: 'body', text: 'No strategic context selected. Create one to get started.' }
-      };
-    }
+    components.push(
+      A2UIMessageBuilder.text('boundaries-title', 'Authority Boundaries')
+    );
 
-    return {
-      surface_id: 'strategic-context-surface',
-      components,
-      root_components: ['root']
-    };
+    const boundaryIds: string[] = [];
+    context.boundaries.forEach((boundary, idx) => {
+      const itemId = `boundary-item-${idx}`;
+      boundaryIds.push(itemId);
+      components.push(
+        A2UIMessageBuilder.listItem(itemId, [`boundary-text-${idx}`])
+      );
+      components.push(
+        A2UIMessageBuilder.text(`boundary-text-${idx}`, `• ${boundary}`)
+      );
+    });
+
+    components.push(
+      A2UIMessageBuilder.list('boundaries-list', boundaryIds, '8px')
+    );
+
+    return [
+      A2UIMessageBuilder.surfaceUpdate(surfaceId, components),
+      A2UIMessageBuilder.beginRendering(surfaceId)
+    ];
   }
 
-  generateAuthorityEnvelopeSurface(envelope?: AuthorityEnvelope): A2UISurface {
-    const components: Record<string, A2UIComponent> = {
-      'root': {
-        component_type: 'container',
-        component_id: 'root',
-        children: ['header']
-      },
-      'header': {
-        component_type: 'card',
-        component_id: 'header',
-        data: { title: 'Authority Envelope' },
-        children: envelope ? ['envelope-content'] : ['empty-state']
-      }
-    };
+  generateAuthorityEnvelopeMessages(envelope: AuthorityEnvelope): A2UIMessage[] {
+    const components: ComponentDefinition[] = [];
+    const surfaceId = 'authority-envelope-surface';
 
-    if (envelope) {
-      components['envelope-content'] = {
-        component_type: 'container',
-        component_id: 'envelope-content',
-        children: ['envelope-id', 'status-badge', 'metadata', 'authorities-card', 'priorities-card']
-      };
+    components.push(
+      A2UIMessageBuilder.column('root', ['title', 'description', 'granted-by', 'scope-section', 'time-section', 'actions-section'], '20px')
+    );
 
-      components['envelope-id'] = {
-        component_type: 'text',
-        component_id: 'envelope-id',
-        data: { variant: 'h2', text: envelope.envelope_id }
-      };
+    components.push(
+      A2UIMessageBuilder.text('title', envelope.name)
+    );
 
-      components['status-badge'] = {
-        component_type: 'badge',
-        component_id: 'status-badge',
-        data: { status: envelope.status, text: envelope.status.toUpperCase() }
-      };
+    components.push(
+      A2UIMessageBuilder.text('description', envelope.description)
+    );
 
-      components['metadata'] = {
-        component_type: 'key_value',
-        component_id: 'metadata',
-        data: {
-          items: [
-            { key: 'Task Scope', value: envelope.task_scope },
-            { key: 'Issued At', value: new Date(envelope.issued_at).toLocaleString() },
-            { key: 'Expires At', value: new Date(envelope.expires_at).toLocaleString() }
-          ]
-        }
-      };
+    components.push(
+      A2UIMessageBuilder.text('granted-by', `Granted by: ${envelope.granted_by}`)
+    );
 
-      components['authorities-card'] = {
-        component_type: 'card',
-        component_id: 'authorities-card',
-        data: { title: 'Granted Authorities' },
-        children: ['authorities-table']
-      };
+    components.push(
+      A2UIMessageBuilder.column('scope-section', ['scope-title', 'scope-domains', 'scope-financial'], '12px')
+    );
 
-      const authorityRows = envelope.granted_authorities.map(auth => {
-        const limits = [];
-        if (auth.max_amount) limits.push(`$${auth.max_amount}`);
-        if (auth.max_percentage) limits.push(`${auth.max_percentage}%`);
-        if (auth.max_recipients) limits.push(`${auth.max_recipients} recipients`);
-        return [auth.action, limits.join(', '), auth.requires_receipt ? 'Yes' : 'No'];
-      });
+    components.push(
+      A2UIMessageBuilder.text('scope-title', 'Delegated Scope')
+    );
 
-      components['authorities-table'] = {
-        component_type: 'table',
-        component_id: 'authorities-table',
-        data: {
-          headers: ['Action', 'Limits', 'Requires Receipt'],
-          rows: authorityRows
-        }
-      };
+    components.push(
+      A2UIMessageBuilder.text('scope-domains', `Domains: ${envelope.scope.domains.join(', ')}`)
+    );
 
-      components['priorities-card'] = {
-        component_type: 'card',
-        component_id: 'priorities-card',
-        data: { title: 'Active Priorities' },
-        children: Object.keys(envelope.active_priorities).map((_, idx) => `priority-${idx}`)
-      };
+    components.push(
+      A2UIMessageBuilder.text('scope-financial', `Max Financial Impact: $${envelope.scope.max_financial_impact}`)
+    );
 
-      Object.entries(envelope.active_priorities).forEach(([key, weight], idx) => {
-        components[`priority-${idx}`] = {
-          component_type: 'progress_bar',
-          component_id: `priority-${idx}`,
-          data: {
-            label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            value: weight * 100,
-            max: 100
-          }
-        };
-      });
-    } else {
-      components['empty-state'] = {
-        component_type: 'text',
-        component_id: 'empty-state',
-        data: { variant: 'body', text: 'No authority envelope selected.' }
-      };
-    }
+    components.push(
+      A2UIMessageBuilder.column('time-section', ['time-title', 'time-valid', 'time-duration'], '8px')
+    );
 
-    return {
-      surface_id: 'authority-envelope-surface',
-      components,
-      root_components: ['root']
-    };
+    components.push(
+      A2UIMessageBuilder.text('time-title', 'Time Bounds')
+    );
+
+    components.push(
+      A2UIMessageBuilder.text('time-valid', `Valid: ${new Date(envelope.time_bounds.valid_from).toLocaleString()} - ${new Date(envelope.time_bounds.valid_until).toLocaleString()}`)
+    );
+
+    components.push(
+      A2UIMessageBuilder.text('time-duration', `Max Duration: ${envelope.time_bounds.max_duration_hours} hours`)
+    );
+
+    components.push(
+      A2UIMessageBuilder.column('actions-section', ['allowed-title', 'allowed-list', 'forbidden-title', 'forbidden-list'], '12px')
+    );
+
+    components.push(
+      A2UIMessageBuilder.text('allowed-title', 'Allowed Actions')
+    );
+
+    const allowedIds: string[] = [];
+    envelope.scope.allowed_actions.forEach((action, idx) => {
+      const itemId = `allowed-item-${idx}`;
+      allowedIds.push(itemId);
+      components.push(
+        A2UIMessageBuilder.listItem(itemId, [`allowed-text-${idx}`])
+      );
+      components.push(
+        A2UIMessageBuilder.text(`allowed-text-${idx}`, `✓ ${action}`)
+      );
+    });
+
+    components.push(
+      A2UIMessageBuilder.list('allowed-list', allowedIds, '4px')
+    );
+
+    components.push(
+      A2UIMessageBuilder.text('forbidden-title', 'Forbidden Actions')
+    );
+
+    const forbiddenIds: string[] = [];
+    envelope.scope.forbidden_actions.forEach((action, idx) => {
+      const itemId = `forbidden-item-${idx}`;
+      forbiddenIds.push(itemId);
+      components.push(
+        A2UIMessageBuilder.listItem(itemId, [`forbidden-text-${idx}`])
+      );
+      components.push(
+        A2UIMessageBuilder.text(`forbidden-text-${idx}`, `✗ ${action}`)
+      );
+    });
+
+    components.push(
+      A2UIMessageBuilder.list('forbidden-list', forbiddenIds, '4px')
+    );
+
+    return [
+      A2UIMessageBuilder.surfaceUpdate(surfaceId, components),
+      A2UIMessageBuilder.beginRendering(surfaceId)
+    ];
   }
 
-  generateDecisionReceiptSurface(receipt?: DecisionReceipt): A2UISurface {
-    const components: Record<string, A2UIComponent> = {
-      'root': {
-        component_type: 'container',
-        component_id: 'root',
-        children: ['header']
-      },
-      'header': {
-        component_type: 'card',
-        component_id: 'header',
-        data: { title: 'Decision Receipt' },
-        children: receipt ? ['receipt-content'] : ['empty-state']
-      }
-    };
+  generateDecisionReceiptMessages(receipt: DecisionReceipt): A2UIMessage[] {
+    const components: ComponentDefinition[] = [];
+    const surfaceId = 'decision-receipt-surface';
 
-    if (receipt) {
-      components['receipt-content'] = {
-        component_type: 'container',
-        component_id: 'receipt-content',
-        children: ['receipt-id', 'decision-badge', 'metadata', 'proposal-card', 'evaluation-card', 'audit-card']
-      };
+    components.push(
+      A2UIMessageBuilder.column('root', ['header', 'situation-section', 'proposal-section', 'evaluation-section', 'outcome-section', 'audit-section'], '24px')
+    );
 
-      components['receipt-id'] = {
-        component_type: 'text',
-        component_id: 'receipt-id',
-        data: { variant: 'h2', text: receipt.receipt_id }
-      };
+    components.push(
+      A2UIMessageBuilder.text('header', `Decision Receipt: ${receipt.id}`)
+    );
 
-      components['decision-badge'] = {
-        component_type: 'badge',
-        component_id: 'decision-badge',
-        data: { status: receipt.decision, text: receipt.decision.toUpperCase() }
-      };
+    components.push(
+      A2UIMessageBuilder.column('situation-section', ['situation-title', 'situation-text', 'timestamp'], '8px')
+    );
 
-      components['metadata'] = {
-        component_type: 'key_value',
-        component_id: 'metadata',
-        data: {
-          items: [
-            { key: 'Envelope ID', value: receipt.envelope_id },
-            { key: 'Timestamp', value: new Date(receipt.timestamp).toLocaleString() },
-            { key: 'Executed At', value: receipt.executed_at ? new Date(receipt.executed_at).toLocaleString() : 'Not executed' }
-          ]
-        }
-      };
+    components.push(
+      A2UIMessageBuilder.text('situation-title', 'Situation')
+    );
 
-      components['proposal-card'] = {
-        component_type: 'card',
-        component_id: 'proposal-card',
-        data: { title: 'Agent Proposal' },
-        children: ['proposal-kv']
-      };
+    components.push(
+      A2UIMessageBuilder.text('situation-text', receipt.situation)
+    );
 
-      const proposalItems = Object.entries(receipt.agent_proposal).map(([key, value]) => ({
-        key: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        value: String(value)
-      }));
+    components.push(
+      A2UIMessageBuilder.text('timestamp', `Time: ${new Date(receipt.timestamp).toLocaleString()}`)
+    );
 
-      components['proposal-kv'] = {
-        component_type: 'key_value',
-        component_id: 'proposal-kv',
-        data: { items: proposalItems }
-      };
+    components.push(
+      A2UIMessageBuilder.column('proposal-section', ['proposal-title', 'proposal-action', 'proposal-details'], '8px')
+    );
 
-      components['evaluation-card'] = {
-        component_type: 'card',
-        component_id: 'evaluation-card',
-        data: { title: 'Judgment Evaluation' },
-        children: ['evaluation-check', 'alignment-card']
-      };
+    components.push(
+      A2UIMessageBuilder.text('proposal-title', 'Proposed Action')
+    );
 
-      components['evaluation-check'] = {
-        component_type: 'key_value',
-        component_id: 'evaluation-check',
-        data: {
-          items: [
-            { key: 'Authority Check', value: receipt.judgment_evaluation.authority_check },
-            { key: 'Within Threshold', value: receipt.judgment_evaluation.within_threshold ? 'Yes' : 'No' },
-            { key: 'Escalation Required', value: receipt.judgment_evaluation.escalation_required ? 'Yes' : 'No' }
-          ]
-        }
-      };
+    components.push(
+      A2UIMessageBuilder.text('proposal-action', `Action: ${receipt.proposed_action.action}`)
+    );
 
-      components['alignment-card'] = {
-        component_type: 'card',
-        component_id: 'alignment-card',
-        data: { title: 'Priority Alignment' },
-        children: Object.keys(receipt.judgment_evaluation.priority_alignment).map((_, idx) => `alignment-${idx}`)
-      };
+    const proposalDetails = Object.entries(receipt.proposed_action)
+      .filter(([key]) => key !== 'action')
+      .map(([key, value]) => `${key}: ${value}`)
+      .join(' | ');
 
-      Object.entries(receipt.judgment_evaluation.priority_alignment).forEach(([key, alignment], idx) => {
-        components[`alignment-${idx}`] = {
-          component_type: 'container',
-          component_id: `alignment-${idx}`,
-          children: [`alignment-bar-${idx}`, `alignment-text-${idx}`]
-        };
+    components.push(
+      A2UIMessageBuilder.text('proposal-details', proposalDetails)
+    );
 
-        components[`alignment-bar-${idx}`] = {
-          component_type: 'progress_bar',
-          component_id: `alignment-bar-${idx}`,
-          data: {
-            label: `${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} (Weight: ${alignment.weight})`,
-            value: alignment.alignment_score * 100,
-            max: 100
-          }
-        };
+    components.push(
+      A2UIMessageBuilder.column('evaluation-section', ['eval-title', 'eval-check', 'eval-score', 'alignment-section'], '12px')
+    );
 
-        components[`alignment-text-${idx}`] = {
-          component_type: 'text',
-          component_id: `alignment-text-${idx}`,
-          data: { variant: 'caption', text: alignment.rationale }
-        };
-      });
+    components.push(
+      A2UIMessageBuilder.text('eval-title', 'Judgment Evaluation')
+    );
 
-      components['audit-card'] = {
-        component_type: 'card',
-        component_id: 'audit-card',
-        data: { title: 'Audit Trail' },
-        children: ['audit-kv']
-      };
+    components.push(
+      A2UIMessageBuilder.text('eval-check', `Authority Check: ${receipt.evaluation.authority_check}`)
+    );
 
-      components['audit-kv'] = {
-        component_type: 'key_value',
-        component_id: 'audit-kv',
-        data: {
-          items: [
-            { key: 'Authority Source', value: receipt.audit_trail.authority_source },
-            { key: 'Granted By', value: receipt.audit_trail.granted_by },
-            { key: 'Decision Rationale', value: receipt.audit_trail.decision_rationale }
-          ]
-        }
-      };
+    components.push(
+      A2UIMessageBuilder.text('eval-score', `Overall Score: ${(receipt.evaluation.overall_score * 100).toFixed(0)}% | Confidence: ${(receipt.evaluation.confidence * 100).toFixed(0)}%`)
+    );
+
+    components.push(
+      A2UIMessageBuilder.column('alignment-section', ['alignment-title', 'alignment-list'], '8px')
+    );
+
+    components.push(
+      A2UIMessageBuilder.text('alignment-title', 'Priority Alignment')
+    );
+
+    const alignmentIds: string[] = [];
+    Object.entries(receipt.evaluation.priority_alignment).forEach(([priority, score], idx) => {
+      const itemId = `alignment-item-${idx}`;
+      const textId = `alignment-text-${idx}`;
+      const barId = `alignment-bar-${idx}`;
+
+      alignmentIds.push(itemId);
+
+      components.push(
+        A2UIMessageBuilder.column(itemId, [textId, barId], '4px')
+      );
+
+      components.push(
+        A2UIMessageBuilder.text(textId, `${priority}: ${(score * 100).toFixed(0)}%`)
+      );
+
+      components.push(
+        A2UIMessageBuilder.text(barId, '█'.repeat(Math.round(score * 20)))
+      );
+    });
+
+    components.push(
+      A2UIMessageBuilder.list('alignment-list', alignmentIds, '8px')
+    );
+
+    components.push(
+      A2UIMessageBuilder.column('outcome-section', ['outcome-title', 'outcome-badge', 'outcome-reason'], '8px')
+    );
+
+    components.push(
+      A2UIMessageBuilder.text('outcome-title', 'Outcome')
+    );
+
+    const outcomeEmoji = receipt.outcome === 'APPROVED' ? '✓' : receipt.outcome === 'ESCALATED' ? '⬆' : '✗';
+    components.push(
+      A2UIMessageBuilder.text('outcome-badge', `${outcomeEmoji} ${receipt.outcome}`)
+    );
+
+    if (receipt.escalation_reason) {
+      components.push(
+        A2UIMessageBuilder.text('outcome-reason', `Reason: ${receipt.escalation_reason}`)
+      );
     } else {
-      components['empty-state'] = {
-        component_type: 'text',
-        component_id: 'empty-state',
-        data: { variant: 'body', text: 'No decision receipt selected.' }
-      };
+      components.push(
+        A2UIMessageBuilder.text('outcome-reason', '')
+      );
     }
 
-    return {
-      surface_id: 'decision-receipt-surface',
-      components,
-      root_components: ['root']
-    };
+    components.push(
+      A2UIMessageBuilder.column('audit-section', ['audit-title', 'audit-list'], '8px')
+    );
+
+    components.push(
+      A2UIMessageBuilder.text('audit-title', 'Audit Trail')
+    );
+
+    const auditIds: string[] = [];
+    receipt.audit_trail.forEach((entry, idx) => {
+      const itemId = `audit-item-${idx}`;
+      auditIds.push(itemId);
+      components.push(
+        A2UIMessageBuilder.listItem(itemId, [`audit-text-${idx}`])
+      );
+      components.push(
+        A2UIMessageBuilder.text(`audit-text-${idx}`, entry)
+      );
+    });
+
+    components.push(
+      A2UIMessageBuilder.list('audit-list', auditIds, '4px')
+    );
+
+    return [
+      A2UIMessageBuilder.surfaceUpdate(surfaceId, components),
+      A2UIMessageBuilder.beginRendering(surfaceId)
+    ];
   }
 }
